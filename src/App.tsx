@@ -1,33 +1,37 @@
 import { useState } from 'react';
-
-<h1>Bấm ngẫu nhiên một ô để bắt đầu</h1>
 const Chessboard = () => {
   const [knightPosition, setKnightPosition] = useState<[number, number] | null>(null)
   const [hasSelectedStart, setHasSelectedStart] = useState(false)
-  const [visitedSquares, setVisitedSquares] = useState<[number, number] []>([]);
+  const [visitedSquares, setVisitedSquares] = useState<[number, number] []>([])
+
+  const isValidMove = (from: [number, number], to: [number, number]) => {
+    const dx = Math.abs(from[0] - to[0])
+    const dy = Math.abs(from[1] - to[1])
+    return (dx === 2 && dy === 1) || (dx === 1 && dy === 2)
+  }
 
   const handleSquareClick = (i: number, j: number) => {
+    const nextPos: [number, number] = [i, j]
     if (!hasSelectedStart) {
-      setKnightPosition([i, j]);
+      setKnightPosition(nextPos);
       setHasSelectedStart(true);
-      setVisitedSquares([[i, j]]);
-    } else {
-      setKnightPosition([i, j]);
-      setVisitedSquares((prev: [number, number][]) => {
-        const alreadyVisited = prev.some(([x, y]) => x === i && y === j);
-        if (alreadyVisited) return prev;
-        return [...prev, [i, j] as [number, number]];
-      });
-      
+      setVisitedSquares([nextPos]);
+    } else if (knightPosition && isValidMove(knightPosition, nextPos)) {
+      setKnightPosition(nextPos);
+      setVisitedSquares((prev) => {
+        const alreadyVisited = prev.some(([x, y]) => x === i && y === j)
+        return alreadyVisited ? prev : [...prev, nextPos]
+      })
     }
-  };
+  }
+
   const renderSquare = (i:number, j:number) => {
     const isKnight = knightPosition && knightPosition[0] === i && knightPosition[1] === j
     const isVisited = visitedSquares.some(([x, y]) => x === i && y === j)
     const isDark = (i + j) % 2 === 1
 
-    let squareColor = isDark ? 'bg-yellow-700' : 'bg-yellow-200';
-    if (isVisited && !isKnight) squareColor = 'bg-red-500';
+    let squareColor = isDark ? 'bg-yellow-700' : 'bg-yellow-200'
+    if (isVisited && !isKnight) squareColor = 'bg-red-500'
     return (
       <div
         key={`${i}-${j}`}
@@ -52,7 +56,7 @@ const Chessboard = () => {
         </div>
       );
     }
-    return squares;
+    return squares
   };
   return (
     <div className="w-screen h-screen flex flex-col justify-center items-center">
