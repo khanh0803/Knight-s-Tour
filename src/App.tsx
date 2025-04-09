@@ -6,8 +6,10 @@ const Chessboard = () => {
   const [visitedSquares, setVisitedSquares] = useState<[number, number] []>([])
   const [suggestedMove, setSuggestedMove] = useState<[number, number] | null>(null)
 
+  // ナイトの有効な移動
   const knightMoves = [[1, 2], [-1, 2], [1, -2], [-1, -2], [2, 1], [-2, 1], [2, -1], [-2, -1]]
   
+  // 現在の位置から、これまで使用されていない有効なマスがあるかどうかを確認する
   const hasValidMoves = (pos: [number, number], visited: [number, number][]) => {
     return knightMoves.some(([dx, dy]) => {
       const [x, y] = [pos[0] + dx, pos[1] + dy]
@@ -19,12 +21,14 @@ const Chessboard = () => {
     })
   }
 
+  //from から to まで移動が有効かどうか確認
   const isValidMove = (from: [number, number], to: [number, number]) => {
     const dx = Math.abs(from[0] - to[0])
     const dy = Math.abs(from[1] - to[1])
     return (dx === 2 && dy === 1) || (dx === 1 && dy === 2)
   }
 
+  //マスをクリックしたときの処理関数
   const handleSquareClick = (i: number, j: number) => {
     const nextPos: [number, number] = [i, j]
     if (!hasSelectedStart) {
@@ -45,12 +49,14 @@ const Chessboard = () => {
     }
   }
 
+  //位置(i, j)のマスに色を付ける関数
   const renderSquare = (i:number, j:number) => {
     const isKnight = knightPosition && knightPosition[0] === i && knightPosition[1] === j
     const isVisited = visitedSquares.some(([x, y]) => x === i && y === j)
     const isSuggested = suggestedMove && suggestedMove[0] === i && suggestedMove[1] === j;
     const isDark = (i + j) % 2 === 1
 
+    //状態に応じた色の機能
     let squareColor = isDark ? 'bg-yellow-700' : 'bg-yellow-200'
     if (isVisited && !isKnight) squareColor = 'bg-red-500'
     if (isSuggested && !isKnight) squareColor = 'bg-green-400'
@@ -65,6 +71,7 @@ const Chessboard = () => {
     );
   };
     
+  //8x8のチェス盤を描く関数
   const renderBoard = () => {
     let squares = [];
     for (let i = 0; i < 8; i++) {
@@ -81,6 +88,7 @@ const Chessboard = () => {
     return squares
   }
 
+  //ゲーム全体を元の状態にリセットする
   const resetGame = () => {
     setKnightPosition(null)
     setVisitedSquares([])
