@@ -67,6 +67,11 @@ const Chessboard = () => {
         onClick={() => handleSquareClick(i, j)}
       >
         {isKnight && <span className="text-5xl">♞</span>}
+
+        {/* <img
+          src="/bocchi.jpg"
+          className='w-10 h-10'
+        /> */}
       </div>
     );
   };
@@ -98,41 +103,44 @@ const Chessboard = () => {
 
   return (
     <div className="w-screen h-screen flex justify-center items-center bg-slate-100">
-      <div>
-        <h1 className="text-3xl font-bold mb-4 text-center">Knight's Tour</h1>
-        <div className="grid grid-rows-8 border-4 border-black shadow-lg">
-          {renderBoard()}          </div>
+      <div className='flex flex-row gap-8 items-start'>
+        <div className='w-[384] h-[384] flex flex-col items-center'>
+          <h1 className="text-3xl font-bold mb-4 text-center">ナイトの巡回</h1>
+          <div className="grid grid-rows-8 border-4 border-black shadow-lg">
+            {renderBoard()}          </div>
+        </div>
       </div>
+      
       {knightPosition && (visitedSquares.length === 64 ? (
+      
       <div>
-        <p className='pl-8 text-green-500 text-7xl font-bold  '>You win</p>
+        <p className='pl-8 text-green-500 text-7xl font-bold  '>勝利</p>
         <button onClick={resetGame}
           className="ml-20 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
-        >Restart the game
+        >リスタート
         </button>
       </div>  ) : 
       !hasValidMoves(knightPosition, visitedSquares) ? (
       <div className="mt-4 pl-20">
-        <p className="text-red-600 text-7xl font-semibold">❌ You lost</p>
+        <p className="text-red-600 text-7xl font-semibold">❌ 敗者</p>
         <button onClick={resetGame}
           className="ml-20 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
-        >Restart the game
+        >リスタート
         </button>
       </div>) : null)
       }
 
       <div>
-        <h2 className="text-3xl font-bold pl-20">Information</h2>
-        <p className="text-3xl font-bold pt-5 pl-20">Score: {visitedSquares.length}</p>
+        <p className="text-3xl font-bold pt-5 pl-20">スコア: {visitedSquares.length}</p>
         <button onClick={() => {
           if (knightPosition) {
             const next = getNextKnightMove(knightPosition, visitedSquares);
             setSuggestedMove(next);
           }
         }}
-        className="mt-6 ml-20 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition"
+        className="mt-6 ml-23 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition"
         >
-        💡 Hint
+        💡 ヒント
         </button>
 
       </div>  
