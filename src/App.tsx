@@ -31,6 +31,7 @@ const Chessboard = () => {
       setKnightPosition(nextPos)
       setHasSelectedStart(true)
       setVisitedSquares([nextPos])
+      setSuggestedMove(null);
     } else if (
       knightPosition && isValidMove(knightPosition, nextPos) && 
       !visitedSquares.some(([x, y]) => x === i && y === j)
@@ -38,6 +39,7 @@ const Chessboard = () => {
       setKnightPosition(nextPos)
       setVisitedSquares((prev) => {
         const updated = [...prev, nextPos]
+        setSuggestedMove(null);
         return updated
       })
     }

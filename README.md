@@ -1,54 +1,20 @@
-# React + TypeScript + Vite
+# ♞ ナイトの巡回ゲーム（Knight's Tour Game）
+このプロジェクトは、チェスのナイト（♞）を使った古典的なパズル「ナイトの巡回（Knight's Tour）」をReactで実装したものです。目的は、ナイトの動きだけを使って、盤上の64マスすべてを一度ずつ訪れることです。
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🚀 主な機能
 
-Currently, two official plugins are available:
+- 8x8のチェスボード（インタラクティブUI）
+- 任意のマスからスタート可能（クリックで開始）
+- 正しいナイトの動きだけが許可される
+- 移動済みのマスは赤く表示
+- 現在のスコア（訪問済みマス数）を表示
+- ヒントボタンで次のおすすめマスを緑でハイライト
+- 勝利（全マス訪問）・敗北（手詰まり）判定機能
+- ゲームリセット機能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🎮 ルール
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+- ナイトは「L字型」に動きます（縦に2マス＋横に1マス、またはその逆）
+- 同じマスを2度踏むことはできません
+- 64マスすべてを一度ずつ訪れれば勝利
+- 有効な移動先がなくなったら敗北
