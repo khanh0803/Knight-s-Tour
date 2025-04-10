@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { getNextKnightMove } from './api/knightAPI';
+import { getNextKnightMove, BoardDimensions } from './api/knightAPI';
 const Chessboard = () => {
   const [rowCount, setRowCount] = useState(8)
   const [colCount, setColCount] = useState(8)
+  const [playerName, setPlayerName] = useState("")
 
+  const [leaderBoard, setLeaderBoard] = useState<{name: string, score: number} []>([])
   const [knightPosition, setKnightPosition] = useState<[number, number] | null>(null)
   const [hasSelectedStart, setHasSelectedStart] = useState(false)
   const [visitedSquares, setVisitedSquares] = useState<[number, number] []>([])
@@ -153,6 +155,16 @@ const Chessboard = () => {
     <div className="w-screen h-screen flex flex-col items-center bg-slate-100">
       <div className="my-4 flex items-center gap-4">
         <div>
+          <label className='m4-2 text-2xl'>名前</label>
+          <input 
+            type="text"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            placeholder="プレイヤー名を入力"
+            className='border px-2 py-1 w-16'
+          />
+        </div>
+        <div>
           <label className="mr-2 text-2xl">行</label>
           <input
             type="number"
@@ -189,36 +201,50 @@ const Chessboard = () => {
           </div>
         </div>
 
-        {knightPosition && (
-          visitedSquares.length === rowCount * colCount ? (
-            <div className="pl-8">
-              <p className="text-green-500 text-7xl font-bold">勝利</p>
-              <button
-                onClick={resetGame}
-                className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
-              >
-                リスタート
-              </button>
-            </div>
-          ) : !hasValidMoves(knightPosition, visitedSquares) ? (
-            <div className="mt-4 pl-8">
-              <p className="text-red-600 text-7xl font-semibold">❌ 敗北</p>
-              <button
-                onClick={resetGame}
-                className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
-              >
-                リスタート
-              </button>
-            </div>
-          ) : null
+        {knightPosition && (visitedSquares.length === rowCount * colCount ? (
+          <div className="pl-8">
+            <p className="text-green-500 text-7xl font-bold">🏆 勝利！</p>
+            {playerName && (
+              <p className="text-xl mt-2">プレイヤー: <strong>{playerName}</strong> スコア: {visitedSquares.length}</p>
+            )}
+            <button
+              onClick={() => {
+              if (playerName) {
+                setLeaderBoard(prev => [...prev, { name: playerName, score: visitedSquares.length }]);
+              }
+              resetGame();
+              }}
+              className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
+              >リスタート
+            </button>
+          </div>
+        ) : !hasValidMoves(knightPosition, visitedSquares) ? (
+          <div className="mt-4 pl-8">
+            <p className="text-red-600 text-7xl font-semibold">❌ 敗北</p>
+            {playerName && (
+              <p className="text-xl mt-2">プレイヤー: <strong>{playerName}</strong> 　　 スコア: {visitedSquares.length}</p>
+            )}
+            <button
+              onClick={() => {
+                if (playerName) {
+                  setLeaderBoard(prev => [...prev, { name: playerName, score: visitedSquares.length }]);
+                }
+                resetGame();
+              }}
+              className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
+            >リスタート
+            </button>
+          </div>
+        ) : null
         )}
-        
+
         <div className="ml-8">
           <p className="text-3xl font-bold ">スコア: {visitedSquares.length}</p>
           <button
             onClick={() => {
               if (knightPosition) {
-                const next = getNextKnightMove(knightPosition, visitedSquares);
+                const board: BoardDimensions = { rows: rowCount, cols: colCount }
+                const next = getNextKnightMove(knightPosition, visitedSquares, board)
                 setSuggestedMove(next);
               }
             }}
@@ -226,6 +252,28 @@ const Chessboard = () => {
           >
             💡 ヒント
           </button>
+          
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-2">🏆 スコアボード</h2>
+            <ul className="text-xl space-y-1">
+            {[...leaderBoard
+              .reduce((acc, curr) => {
+                const existing = acc.get(curr.name);
+                if (!existing || curr.score > existing.score) {
+                  acc.set(curr.name, curr);
+                }
+                return acc;
+              }, new Map<string, { name: string; score: number }>())
+              .values()]
+              .sort((a, b) => b.score - a.score)
+              .map((entry, idx) => (
+                <li key={idx}>
+                  {idx + 1}. {entry.name} - {entry.score} 点
+                </li>
+              ))
+            }
+            </ul>
+          </div>
         </div>
       </div>
     </div>
