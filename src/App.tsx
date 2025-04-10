@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { getNextKnightMove } from './api/knightAPI';
 const Chessboard = () => {
+  const [rowCount, setRowCount] = useState(8)
+  const [colCount, setColCount] = useState(8)
+
   const [knightPosition, setKnightPosition] = useState<[number, number] | null>(null)
   const [hasSelectedStart, setHasSelectedStart] = useState(false)
   const [visitedSquares, setVisitedSquares] = useState<[number, number] []>([])
@@ -14,8 +17,8 @@ const Chessboard = () => {
     return knightMoves.some(([dx, dy]) => {
       const [x, y] = [pos[0] + dx, pos[1] + dy]
       return (
-        x >= 0 && x < 8 &&
-        y >= 0 && y < 8 &&
+        x >= 0 && x < rowCount &&
+        y >= 0 && y < colCount &&
         !visited.some(([vx, vy]) => vx === x && vy === y)
       )
     })
@@ -76,21 +79,21 @@ const Chessboard = () => {
     );
   };
     
-  //8x8のチェス盤を描く関数
+  //行ｘ列のチェス盤を描く関数
   const renderBoard = () => {
-    let squares = [];
-    for (let i = 0; i < 8; i++) {
+    let boards = [];
+    for (let i = 0; i < rowCount; i++) {
       let row = [];
-      for (let j = 0; j < 8; j++) {
+      for (let j = 0; j < colCount; j++) {
         row.push(renderSquare(i, j))
       }
-      squares.push(
+      boards.push(
         <div key={i} className="flex">
           {row}
         </div>
       )
     }
-    return squares
+    return boards
   }
 
   //ゲーム全体を元の状態にリセットする
@@ -101,51 +104,91 @@ const Chessboard = () => {
     setSuggestedMove(null)
   }
 
+  const handleUpdateBoard = () => {
+    resetGame();
+  };
+
   return (
-    <div className="w-screen h-screen flex justify-center items-center bg-slate-100">
-      <div className='flex flex-row gap-8 items-start'>
-        <div className='w-[384] h-[384] flex flex-col items-center'>
+    <div className="w-screen h-screen flex flex-col items-center bg-slate-100">
+
+      <div className="my-4 flex items-center gap-4">
+        <div>
+          <label className="mr-2 text-2xl">行</label>
+          <input
+            type="number"
+            min={1}
+            value={rowCount}
+            onChange={(e) => setRowCount(Number(e.target.value))}
+            className="border px-2 py-1 w-16"
+          />
+        </div>
+        <div>
+          <label className="mr-2 text-2xl">列</label>
+          <input
+            type="number"
+            min={1}
+            value={colCount}
+            onChange={(e) => setColCount(Number(e.target.value))}
+            className="border px-2 py-1 w-16"
+          />
+        </div>
+        <button
+          onClick={handleUpdateBoard}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          <p className='text-2xl'>更新</p>
+        </button>
+      </div>
+
+      <div className="flex flex-row gap-8 items-center">
+        <div className="flex flex-col items-center">
           <h1 className="text-3xl font-bold mb-4 text-center">ナイトの巡回</h1>
-          <div className="grid grid-rows-8 border-4 border-black shadow-lg">
-            {renderBoard()}          </div>
+          <div className="border-4 border-black shadow-lg inline-block">
+            {renderBoard()}
+          </div>
+        </div>
+
+        {knightPosition && (
+          visitedSquares.length === rowCount * colCount ? (
+            <div className="pl-8">
+              <p className="text-green-500 text-7xl font-bold">勝利</p>
+              <button
+                onClick={resetGame}
+                className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
+              >
+                リスタート
+              </button>
+            </div>
+          ) : !hasValidMoves(knightPosition, visitedSquares) ? (
+            <div className="mt-4 pl-8">
+              <p className="text-red-600 text-7xl font-semibold">❌ 敗北</p>
+              <button
+                onClick={resetGame}
+                className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
+              >
+                リスタート
+              </button>
+            </div>
+          ) : null
+        )}
+        
+        <div className="ml-8">
+          <p className="text-3xl font-bold ">スコア: {visitedSquares.length}</p>
+          <button
+            onClick={() => {
+              if (knightPosition) {
+                const next = getNextKnightMove(knightPosition, visitedSquares);
+                setSuggestedMove(next);
+              }
+            }}
+            className="mt-6 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition"
+          >
+            💡 ヒント
+          </button>
         </div>
       </div>
-      
-      {knightPosition && (visitedSquares.length === 64 ? (
-      
-      <div>
-        <p className='pl-8 text-green-500 text-7xl font-bold  '>勝利</p>
-        <button onClick={resetGame}
-          className="ml-20 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
-        >リスタート
-        </button>
-      </div>  ) : 
-      !hasValidMoves(knightPosition, visitedSquares) ? (
-      <div className="mt-4 pl-20">
-        <p className="text-red-600 text-7xl font-semibold">❌ 敗者</p>
-        <button onClick={resetGame}
-          className="ml-20 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
-        >リスタート
-        </button>
-      </div>) : null)
-      }
-
-      <div>
-        <p className="text-3xl font-bold pt-5 pl-20">スコア: {visitedSquares.length}</p>
-        <button onClick={() => {
-          if (knightPosition) {
-            const next = getNextKnightMove(knightPosition, visitedSquares);
-            setSuggestedMove(next);
-          }
-        }}
-        className="mt-6 ml-23 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition"
-        >
-        💡 ヒント
-        </button>
-
-      </div>  
     </div>
-  )
-}
+  );
+};
 
-export default Chessboard
+export default Chessboard;
