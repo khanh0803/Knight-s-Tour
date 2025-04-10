@@ -8,6 +8,8 @@ const Chessboard = () => {
   const [hasSelectedStart, setHasSelectedStart] = useState(false)
   const [visitedSquares, setVisitedSquares] = useState<[number, number] []>([])
   const [suggestedMove, setSuggestedMove] = useState<[number, number] | null>(null)
+  const [isSelected, setIsSelected] = useState(false) 
+  const [validMoves, setValidMoves] = useState<[number, number] []>([])               //有効な動きを表示
 
   // ナイトの有効な移動
   const knightMoves = [[1, 2], [-1, 2], [1, -2], [-1, -2], [2, 1], [-2, 1], [2, -1], [-2, -1]]
@@ -39,17 +41,46 @@ const Chessboard = () => {
       setHasSelectedStart(true)
       setVisitedSquares([nextPos])
       setSuggestedMove(null);
-    } else if (
+      setIsSelected(false)
+      setValidMoves([])
+    }
+    
+    if (knightPosition && knightPosition[0] === i && knightPosition[1] === j) {
+      const possibleMoves = knightMoves
+        .map(([dx, dy]) => [knightPosition[0] + dx, knightPosition[1] + dy] as [number, number])
+        .filter(([x, y]) =>
+          x >= 0 && x < rowCount &&
+          y >= 0 && y < colCount &&
+          !visitedSquares.some(([vx, vy]) => vx === x && vy === y)
+        );
+      setIsSelected(true);
+      setValidMoves(possibleMoves);
+      return;
+    }
+
+    const isMoveValid = validMoves.some(([x, y]) => x === i && y === j);
+    if (isSelected && isMoveValid) {
+      setKnightPosition(nextPos);
+      setVisitedSquares((prev) => [...prev, nextPos]);
+      setIsSelected(false);
+      setValidMoves([]);
+      setSuggestedMove(null);
+      return;
+    }
+
+    if (
       knightPosition && isValidMove(knightPosition, nextPos) && 
       !visitedSquares.some(([x, y]) => x === i && y === j)
     ) {
-      setKnightPosition(nextPos)
-      setVisitedSquares((prev) => {
-        const updated = [...prev, nextPos]
-        setSuggestedMove(null);
+        setKnightPosition(nextPos)
+        setVisitedSquares((prev) => {const updated = [...prev, nextPos]
+        setSuggestedMove(null)
+        setIsSelected(false)
         return updated
       })
     }
+    setIsSelected(false)
+    setValidMoves([])
   }
 
   //位置(i, j)のマスに色を付ける関数
@@ -58,6 +89,8 @@ const Chessboard = () => {
     const isVisited = visitedSquares.some(([x, y]) => x === i && y === j)
     const isSuggested = suggestedMove && suggestedMove[0] === i && suggestedMove[1] === j;
     const isDark = (i + j) % 2 === 1
+    const isKnightSelectedSquare = isKnight && isSelected
+    const isValidTargets = validMoves.some(([x, y]) => x === i && y === j)
 
     //状態に応じた色の機能
     let squareColor = isDark ? 'bg-yellow-700' : 'bg-yellow-200'
@@ -66,17 +99,23 @@ const Chessboard = () => {
     return (
       <div
         key={`${i}-${j}`}
-        className={`w-12 h-12 flex justify-center items-center cursor-pointer ${squareColor}`}
+        className={`relative w-12 h-12 flex justify-center items-center cursor-pointer ${squareColor}`}
         onClick={() => handleSquareClick(i, j)}
       >
         {isKnight && <span className="text-5xl">♞</span>}
-
-        {/* <img
-          src="/bocchi.jpg"
-          className='w-10 h-10'
-        /> */}
+        
+        {isKnightSelectedSquare && (
+          <div className="absolute inset-0.25 border-4 border-blue-500 pointer-events-none"></div>
+        )}
+        {isValidTargets && (
+          <div className="absolute inset-0.25 border-4 border-green-400 pointer-events-none"></div>
+        )}
       </div>
     );
+
+    {/* <img src="/bocchi.jpg"
+          className='w-10 h-10'
+        /> */}
   };
     
   //行ｘ列のチェス盤を描く関数
@@ -102,6 +141,8 @@ const Chessboard = () => {
     setVisitedSquares([])
     setHasSelectedStart(false)
     setSuggestedMove(null)
+    setIsSelected(false)
+    setValidMoves([])
   }
 
   const handleUpdateBoard = () => {
@@ -110,7 +151,6 @@ const Chessboard = () => {
 
   return (
     <div className="w-screen h-screen flex flex-col items-center bg-slate-100">
-
       <div className="my-4 flex items-center gap-4">
         <div>
           <label className="mr-2 text-2xl">行</label>
@@ -122,6 +162,7 @@ const Chessboard = () => {
             className="border px-2 py-1 w-16"
           />
         </div>
+
         <div>
           <label className="mr-2 text-2xl">列</label>
           <input
