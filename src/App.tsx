@@ -110,6 +110,9 @@ const Chessboard = () => {
         onClick={() => handleSquareClick(i, j)}
       >
         {isKnight && <span className="text-5xl">♞</span>}
+        {/* {isKnight && <img src="/bocchi.jpg"
+          className='w-10 h-10'
+        />} */}
         
         {isKnightSelectedSquare && (
           <div className="absolute inset-0.25 border-4 border-blue-500 pointer-events-none"></div>
@@ -119,10 +122,6 @@ const Chessboard = () => {
         )}
       </div>
     )
-
-    {/* <img src="/bocchi.jpg"
-          className='w-10 h-10'
-        /> */}
   }
     
   //行ｘ列のチェス盤を描く関数
@@ -180,14 +179,16 @@ const Chessboard = () => {
   
       try {
         if (isRegistering) {
-          const result = await createUserWithEmailAndPassword(auth, email, password)
-          setPlayerName(result.user.email || "anonymous")
-          setIsLoggedIn(true)
+          const displayName = (form.elements.namedItem('displayName') as HTMLInputElement).value;
+          const result = await createUserWithEmailAndPassword(auth, email, password);
+          setPlayerName(displayName);
+          setIsLoggedIn(true);
         } else {
-          const result = await signInWithEmailAndPassword(auth, email, password)
-          setPlayerName(result.user.email || "anonymous")
-          setIsLoggedIn(true)
+          const result = await signInWithEmailAndPassword(auth, email, password);
+          setPlayerName(result.user.email || "anonymous");
+          setIsLoggedIn(true);
         }
+        
       } catch (error: any) {
         alert((isRegistering ? "Sign up" : "Sign in") + " fail: " + error.message)
       }
@@ -206,6 +207,16 @@ const Chessboard = () => {
             required
             className="border px-4 py-2 w-64"
           />
+          {isRegistering && (
+            <input
+              name="displayName"
+              type="text"
+              placeholder="Nickname"
+              required
+              className="border px-4 py-2 rounded"
+            />
+          )} 
+
           <input
             name="password"
             type="password"
