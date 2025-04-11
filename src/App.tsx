@@ -1,9 +1,14 @@
-import { useState } from 'react';
-import { getNextKnightMove, BoardDimensions } from './api/knightAPI';
+import { useState } from 'react'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { signOut } from 'firebase/auth'
+import { auth } from './firebaseConfig'
+import { getNextKnightMove, BoardDimensions } from './api/knightAPI'
 const Chessboard = () => {
   const [rowCount, setRowCount] = useState(8)
   const [colCount, setColCount] = useState(8)
   const [playerName, setPlayerName] = useState("")
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const [leaderBoard, setLeaderBoard] = useState<{name: string, score: number} []>([])
   const [knightPosition, setKnightPosition] = useState<[number, number] | null>(null)
@@ -11,7 +16,7 @@ const Chessboard = () => {
   const [visitedSquares, setVisitedSquares] = useState<[number, number] []>([])
   const [suggestedMove, setSuggestedMove] = useState<[number, number] | null>(null)
   const [isSelected, setIsSelected] = useState(false) 
-  const [validMoves, setValidMoves] = useState<[number, number] []>([])               //有効な動きを表示
+  const [validMoves, setValidMoves] = useState<[number, number] []>([])  //有効な動きを表示
 
   // ナイトの有効な移動
   const knightMoves = [[1, 2], [-1, 2], [1, -2], [-1, -2], [2, 1], [-2, 1], [2, -1], [-2, -1]]
@@ -55,19 +60,19 @@ const Chessboard = () => {
           y >= 0 && y < colCount &&
           !visitedSquares.some(([vx, vy]) => vx === x && vy === y)
         );
-      setIsSelected(true);
-      setValidMoves(possibleMoves);
-      return;
+      setIsSelected(true)
+      setValidMoves(possibleMoves)
+      return
     }
 
-    const isMoveValid = validMoves.some(([x, y]) => x === i && y === j);
+    const isMoveValid = validMoves.some(([x, y]) => x === i && y === j)
     if (isSelected && isMoveValid) {
-      setKnightPosition(nextPos);
-      setVisitedSquares((prev) => [...prev, nextPos]);
-      setIsSelected(false);
-      setValidMoves([]);
-      setSuggestedMove(null);
-      return;
+      setKnightPosition(nextPos)
+      setVisitedSquares((prev) => [...prev, nextPos])
+      setIsSelected(false)
+      setValidMoves([])
+      setSuggestedMove(null)
+      return
     }
 
     if (
@@ -89,7 +94,7 @@ const Chessboard = () => {
   const renderSquare = (i:number, j:number) => {
     const isKnight = knightPosition && knightPosition[0] === i && knightPosition[1] === j
     const isVisited = visitedSquares.some(([x, y]) => x === i && y === j)
-    const isSuggested = suggestedMove && suggestedMove[0] === i && suggestedMove[1] === j;
+    const isSuggested = suggestedMove && suggestedMove[0] === i && suggestedMove[1] === j
     const isDark = (i + j) % 2 === 1
     const isKnightSelectedSquare = isKnight && isSelected
     const isValidTargets = validMoves.some(([x, y]) => x === i && y === j)
@@ -113,18 +118,18 @@ const Chessboard = () => {
           <div className="absolute inset-0.25 border-4 border-green-400 pointer-events-none"></div>
         )}
       </div>
-    );
+    )
 
     {/* <img src="/bocchi.jpg"
           className='w-10 h-10'
         /> */}
-  };
+  }
     
   //行ｘ列のチェス盤を描く関数
   const renderBoard = () => {
-    let boards = [];
+    let boards = []
     for (let i = 0; i < rowCount; i++) {
-      let row = [];
+      let row = []
       for (let j = 0; j < colCount; j++) {
         row.push(renderSquare(i, j))
       }
@@ -150,20 +155,89 @@ const Chessboard = () => {
   const handleUpdateBoard = () => {
     resetGame();
   };
-
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setPlayerName("");
+      setIsLoggedIn(false);
+    } catch (error: any) {
+      alert("Sign out fail: " + error.message);
+    }
+  };
+  
+  const getBestScore = (name: string) => {
+    const scores = leaderBoard.filter(entry => entry.name === name);
+    if (scores.length === 0) return 0;
+    return Math.max(...scores.map(entry => entry.score));
+  }
+  
+  if (!isLoggedIn) {
+    const handleAuth = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const email = (form.elements.namedItem('email') as HTMLInputElement).value
+      const password = (form.elements.namedItem('password') as HTMLInputElement).value
+  
+      try {
+        if (isRegistering) {
+          const result = await createUserWithEmailAndPassword(auth, email, password)
+          setPlayerName(result.user.email || "anonymous")
+          setIsLoggedIn(true)
+        } else {
+          const result = await signInWithEmailAndPassword(auth, email, password)
+          setPlayerName(result.user.email || "anonymous")
+          setIsLoggedIn(true)
+        }
+      } catch (error: any) {
+        alert((isRegistering ? "Sign up" : "Sign in") + " fail: " + error.message)
+      }
+    }
+  
+    return (
+      <div className='flex items-center justify-center'>
+        <form onSubmit={handleAuth} className="flex flex-col items-center justify-center min-h-screen gap-4">
+          <h1 className="text-3xl font-bold">
+            {isRegistering ? "サインアップ" : "サインイン"}
+          </h1>
+          <input
+            name="email"
+            type="email"
+            placeholder="khanhdz@sohobb.jp"
+            required
+            className="border px-4 py-2 w-64"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="パスワード"
+            required
+            className="border px-4 py-2 w-64"
+          />
+          <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+            {isRegistering ? "サインアップ" : "サインイン"}
+          </button>
+    
+          <button
+            type="button"
+            onClick={() => setIsRegistering(!isRegistering)}
+            className="text-sm text-blue-600 hover:underline mt-2"
+          >
+            {isRegistering
+              ? "Already have account? サインイン"
+              : "No account yet? サインアップ"}
+          </button>
+        </form>
+      </div>
+    );
+  }
+    
   return (
     <div className="w-screen h-screen flex flex-col items-center bg-slate-100">
       <div className="my-4 flex items-center gap-4">
         <div>
-          <label className='m4-2 text-2xl'>名前</label>
-          <input 
-            type="text"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            placeholder="プレイヤー名を入力"
-            className='border px-2 py-1 w-16'
-          />
+          <p className="text-xl"> こんにちは: <strong>{playerName}</strong></p>
         </div>
+
         <div>
           <label className="mr-2 text-2xl">行</label>
           <input
@@ -205,14 +279,14 @@ const Chessboard = () => {
           <div className="pl-8">
             <p className="text-green-500 text-7xl font-bold">🏆 勝利！</p>
             {playerName && (
-              <p className="text-xl mt-2">プレイヤー: <strong>{playerName}</strong> スコア: {visitedSquares.length}</p>
+              <p className="text-5xl mt-2 pl-4"> スコア: {visitedSquares.length}</p>
             )}
             <button
               onClick={() => {
               if (playerName) {
-                setLeaderBoard(prev => [...prev, { name: playerName, score: visitedSquares.length }]);
+                setLeaderBoard(prev => [...prev, { name: playerName, score: visitedSquares.length }])
               }
-              resetGame();
+              resetGame()
               }}
               className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
               >リスタート
@@ -222,14 +296,14 @@ const Chessboard = () => {
           <div className="mt-4 pl-8">
             <p className="text-red-600 text-7xl font-semibold">❌ 敗北</p>
             {playerName && (
-              <p className="text-xl mt-2">プレイヤー: <strong>{playerName}</strong> 　　 スコア: {visitedSquares.length}</p>
+              <p className="text-3xl mt-2 pl-20"> スコア: {visitedSquares.length}</p>
             )}
             <button
               onClick={() => {
                 if (playerName) {
                   setLeaderBoard(prev => [...prev, { name: playerName, score: visitedSquares.length }]);
                 }
-                resetGame();
+                resetGame()
               }}
               className="ml-4 mt-4 px-4 py-2 bg-blue-200 bg-opacity-40 hover:bg-violet-400 text-black"
             >リスタート
@@ -239,20 +313,20 @@ const Chessboard = () => {
         )}
 
         <div className="ml-8">
-          <p className="text-3xl font-bold ">スコア: {visitedSquares.length}</p>
+          <p className="text-3xl font-bold">🏅 Best Score: {getBestScore(playerName)}</p>
           <button
             onClick={() => {
               if (knightPosition) {
                 const board: BoardDimensions = { rows: rowCount, cols: colCount }
                 const next = getNextKnightMove(knightPosition, visitedSquares, board)
-                setSuggestedMove(next);
+                setSuggestedMove(next)
               }
             }}
             className="mt-6 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition"
           >
             💡 ヒント
           </button>
-          
+
           <div className="mt-8">
             <h2 className="text-2xl font-bold mb-2">🏆 スコアボード</h2>
             <ul className="text-xl space-y-1">
@@ -260,7 +334,7 @@ const Chessboard = () => {
               .reduce((acc, curr) => {
                 const existing = acc.get(curr.name);
                 if (!existing || curr.score > existing.score) {
-                  acc.set(curr.name, curr);
+                  acc.set(curr.name, curr)
                 }
                 return acc;
               }, new Map<string, { name: string; score: number }>())
@@ -274,6 +348,15 @@ const Chessboard = () => {
             }
             </ul>
           </div>
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <button
+              onClick={handleSignOut}
+              className="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              サインアウト
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
